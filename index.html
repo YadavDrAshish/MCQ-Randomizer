@@ -607,7 +607,7 @@ function updatePreview(){
   var numOpts=Math.min(parseInt(document.getElementById('numOptions').value)||4,4);
   var sampleOpts=['Propranolol','Atenolol','Metoprolol','Labetalol'];
   var html=stemLabel(1,stemTypeSel,stemPunct)+' Which of the following is a cardioselective beta blocker?\n';
-  for(var i=0;i<numOpts;i++)html+='   '+optLabel(i,optTypeSel,optPunct)+' '+sampleOpts[i]+'\n';
+  for(var i=0;i<numOpts;i++)html+=optLabel(i,optTypeSel,optPunct)+' '+sampleOpts[i]+'\n';
   prev.textContent=html.trim();
 }
 
