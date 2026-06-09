@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCQ Randomizer — ASPIRIN PLEASE!</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.19.0/webfont/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0ede8;--surface:#ffffff;--surface2:#e8e4de;
+  --dark:#3a3540;--dark2:#2e2a33;--dark3:#4a4550;
+  --amber:#e8a020;--amber2:#f0b840;--amber-light:#fdf3e0;
+  --text:#2a2530;--muted:#6a6070;--light-text:#9a9098;
+  --border:#d0cbc4;--border-dark:#c0bab4;
+  --ok:#2a6a3a;--ok-bg:#eaf5ed;
+  --warn:#8a5a10;--warn-bg:#fdf3e0;
+  --err:#8a2020;--err-bg:#fdf0f0;
+  --radius:6px;--radius-lg:10px;
+}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:14px;color:var(--text);background:var(--bg);padding:1rem}
+.wrap{display:flex;flex-direction:column;gap:.75rem;max-width:720px;margin:0 auto}
+
+.tool-header{background:var(--dark);border-radius:var(--radius-lg);padding:1rem 1.25rem;display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--amber)}
+.th-icon{font-size:26px;color:var(--amber)}
+.th-title{font-size:16px;font-weight:700;color:#f0ede8;letter-spacing:.04em}
+.th-sub{font-size:11px;color:#9a9098;margin-top:2px}
+
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:opacity .3s,filter .3s}
+.step-card.locked{opacity:.5;pointer-events:none;filter:grayscale(.3)}
+.step-header{background:var(--dark2);padding:.55rem 1rem;display:flex;align-items:center;gap:8px}
+.sn{background:var(--amber);color:var(--dark);font-size:11px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.st{font-size:13px;font-weight:600;color:#f0ede8}
+.sc{margin-left:auto;font-size:11px;color:var(--amber2)}
+.step-body{padding:.9rem 1rem}
+
+.info-links{display:flex;gap:16px;margin-top:.6rem;flex-wrap:wrap}
+.info-link{font-size:12px;color:var(--amber);cursor:pointer;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s;background:none;border-top:none;border-left:none;border-right:none;padding:0;font-family:inherit}
+.info-link:hover{border-bottom-color:var(--amber)}
+
+.upload-zone{border:2px dashed var(--border-dark);border-radius:var(--radius);padding:1.25rem;text-align:center;cursor:pointer;transition:background .15s,border-color .15s;background:var(--surface2)}
+.upload-zone:hover{background:var(--amber-light);border-color:var(--amber)}
+.upload-zone input{display:none}
+.uz-icon{font-size:24px;color:var(--muted);margin-bottom:4px}
+.uz-text{font-size:13px;color:var(--muted)}
+.uz-file{font-size:13px;font-weight:600;color:var(--amber);margin-top:4px}
+
+.field-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--muted)}
+.field input[type=number],.field select{font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;font-family:inherit}
+.field input[type=number]:focus,.field select:focus{border-color:var(--amber)}
+
+.radio-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.radio-row label{font-size:13px;display:flex;align-items:center;gap:5px;cursor:pointer;color:var(--text);accent-color:var(--amber)}
+.section-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.toggle-field{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.75rem}
+.toggle-field .tl{font-size:13px;color:var(--text)}
+
+.block-cards{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.block-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem .9rem}
+.block-card.invalid{border-color:var(--err)}
+.bc-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.bc-row label{font-size:12px;color:var(--muted)}
+.bc-row input{font-size:13px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);width:80px;outline:none;transition:border-color .15s;font-family:inherit}
+.bc-row input:focus{border-color:var(--amber)}
+.block-summary{font-size:11px;color:var(--amber);font-weight:600;margin-top:4px;min-height:15px}
+.block-err{font-size:11px;color:var(--err);margin-top:2px;min-height:14px}
+
+.pos-options{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.pos-opt{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:background .15s,border-color .15s;accent-color:var(--amber)}
+.pos-opt:hover{background:var(--amber-light)}
+.pos-opt.selected{border-color:var(--amber);background:var(--amber-light)}
+.pos-opt input{margin-top:2px}
+.po-text{flex:1}
+.po-label{font-size:13px;font-weight:600;color:var(--dark)}
+.po-desc{font-size:11px;color:var(--muted);margin-top:1px}
+.pos-preview{margin-top:5px;display:flex;gap:3px;flex-wrap:wrap;align-items:center}
+.pp-seg{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:600}
+.pp-free{background:#dde8dd;color:#1a4a1a}
+.pp-block{background:#e0d8f0;color:#2a1a5a}
+.pp-arrow{font-size:10px;color:var(--light-text)}
+.pp-label{font-size:10px;color:var(--muted);margin-right:4px;font-style:italic}
+
+.fmt-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start}
+.fmt-col{display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px}
+.fmt-col .fc-label{font-size:12px;color:var(--muted)}
+.fmt-col select{font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;font-family:inherit}
+.fmt-col select:focus{border-color:var(--amber)}
+.fmt-radios{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.fmt-radio-btn{padding:4px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:'Courier New',monospace;background:var(--surface);color:var(--text);transition:background .15s,border-color .15s}
+.fmt-radio-btn:hover{border-color:var(--amber);background:var(--amber-light)}
+.fmt-radio-btn.active{background:var(--dark);color:var(--amber);border-color:var(--dark)}
+.fmt-preview{margin-top:10px;background:var(--dark2);border:1px solid var(--dark3);border-radius:var(--radius);padding:.75rem 1rem;font-family:'Courier New',monospace;font-size:12px;color:#d0cfc8;line-height:1.9;border-left:3px solid var(--amber)}
+
+.btn-row{display:flex;gap:.6rem;align-items:stretch}
+.run-btn{flex:2;padding:10px 16px;font-size:14px;font-weight:600;background:var(--dark);color:var(--amber);border:1px solid var(--amber);border-radius:var(--radius);cursor:pointer;transition:background .15s,color .15s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.run-btn:hover:not(:disabled){background:var(--amber);color:var(--dark)}
+.run-btn:disabled{background:var(--surface2);color:var(--light-text);border-color:var(--border);cursor:not-allowed}
+.reset-btn{flex:1;padding:10px 12px;font-size:13px;font-weight:600;background:var(--surface);color:var(--err);border:1px solid var(--border-dark);border-radius:var(--radius);cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.reset-btn:hover{background:var(--err-bg);border-color:var(--err)}
+
+.console-wrap{border-radius:var(--radius-lg);overflow:hidden;border:1px solid rgba(0,0,0,.35)}
+.console-header{background:rgba(20,15,25,.92);padding:.45rem .9rem;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+.console-dot{width:8px;height:8px;border-radius:50%}
+.cd-red{background:#e05050}.cd-amber{background:var(--amber)}.cd-green{background:#50c050}
+.console-title{font-size:10px;color:rgba(200,190,210,.6);letter-spacing:.1em;margin-left:4px;font-family:'Courier New',monospace}
+.console{min-height:150px;max-height:200px;overflow-y:auto;background:rgba(15,10,20,.82);padding:.75rem .9rem;display:flex;flex-direction:column;gap:2px}
+.console::-webkit-scrollbar{width:4px}
+.console::-webkit-scrollbar-track{background:rgba(255,255,255,.04)}
+.console::-webkit-scrollbar-thumb{background:rgba(232,160,32,.4);border-radius:2px}
+.log{display:flex;gap:8px;line-height:1.5;font-family:'Courier New',monospace;font-size:11px}
+.log .ts{color:rgba(232,160,32,.5);white-space:nowrap;flex-shrink:0}
+.log.info .msg{color:rgba(220,215,210,.8)}
+.log.ok .msg{color:#80d0a0}
+.log.warn .msg{color:#f0c060}
+.log.err .msg{color:#f08080}
+.log.head .msg{color:var(--amber);font-weight:700;letter-spacing:.03em}
+.log-div{border-top:1px solid rgba(255,255,255,.06);margin:3px 0}
+
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center}
+.popup-overlay.open{display:flex}
+.popup{background:var(--surface);border-radius:var(--radius-lg);padding:1.25rem;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;position:relative;border-top:3px solid var(--amber)}
+.popup-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:.75rem;padding-right:24px}
+.popup-close{position:absolute;top:.9rem;right:.9rem;background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);line-height:1;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px}
+.popup-close:hover{background:var(--err-bg);color:var(--err)}
+.popup-body{font-size:13px;color:var(--text);line-height:1.7}
+.popup-body h3{font-size:12px;font-weight:700;color:var(--dark);margin:1rem 0 .4rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);padding-bottom:3px}
+.popup-body pre{font-family:'Courier New',monospace;background:var(--dark2);color:#d0cfc8;border-radius:var(--radius);padding:.75rem;margin:.5rem 0;white-space:pre-wrap;line-height:1.7;font-size:12px;border-left:3px solid var(--amber)}
+.fmt-tag{display:inline-block;background:var(--dark2);color:var(--amber);border:1px solid var(--dark3);border-radius:3px;padding:1px 8px;font-size:12px;font-family:'Courier New',monospace;margin:2px}
+
+.err-popup{background:var(--surface);border-radius:var(--radius-lg);padding:1.5rem;max-width:400px;width:90%;text-align:center;border-top:4px solid var(--err)}
+.ep-icon{font-size:32px;color:var(--err);margin-bottom:.5rem}
+.ep-title{font-size:15px;font-weight:700;color:var(--err);margin-bottom:.5rem}
+.ep-msg{font-size:13px;color:var(--muted);margin-bottom:1rem;line-height:1.6}
+.ep-link{font-size:12px;color:var(--amber);text-decoration:underline;cursor:pointer;display:block;margin-bottom:1rem;background:none;border:none;font-family:inherit}
+.ep-btn{padding:7px 24px;background:var(--dark);color:var(--amber);border:1px solid var(--amber);border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.ep-btn:hover{background:var(--amber);color:var(--dark)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="tool-header">
+  <div class="th-icon"><i class="ti ti-vaccine"></i></div>
+  <div>
+    <div class="th-title">MCQ Randomizer</div>
+    <div class="th-sub">ASPIRIN PLEASE! &nbsp;·&nbsp; Teacher Tools</div>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div class="step-card" id="step1">
+  <div class="step-header">
+    <div class="sn">1</div>
+    <div class="st">Upload MCQ file</div>
+    <div class="sc" id="step1status"></div>
+  </div>
+  <div class="step-body">
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <input type="file" id="fileInput" accept=".txt">
+      <div class="uz-icon"><i class="ti ti-file-text"></i></div>
+      <div class="uz-text">Click to upload or drag &amp; drop a .txt file</div>
+      <div class="uz-file" id="fileName">No file selected</div>
+    </div>
+    <div class="info-links">
+      <button class="info-link" onclick="openPopup('samplePopup')"><i class="ti ti-file-description"></i> Sample MCQ file &amp; allowed formats</button>
+      <button class="info-link" onclick="openPopup('practicesPopup')"><i class="ti ti-bulb"></i> Good MCQ practices</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="step-card locked" id="step2">
+  <div class="step-header">
+    <div class="sn">2</div>
+    <div class="st">Question settings</div>
+    <div class="sc" id="step2status"></div>
+  </div>
+  <div class="step-body">
+    <div class="field-row">
+      <div class="field">
+        <label for="numOptions">Number of options per MCQ</label>
+        <input type="number" id="numOptions" min="2" max="10" placeholder="e.g. 4" style="width:130px" oninput="checkStep2()">
+      </div>
+      <div class="field">
+        <label for="numSets">Number of randomized sets</label>
+        <input type="number" id="numSets" min="1" max="99" placeholder="e.g. 3" style="width:130px" oninput="checkStep2()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="step-card locked" id="step3">
+  <div class="step-header">
+    <div class="sn">3</div>
+    <div class="st">MCQ blocks</div>
+    <div class="sc" id="step3status"></div>
+  </div>
+  <div class="step-body">
+    <div class="toggle-field">
+      <span class="tl">Does this question paper have blocks?</span>
+      <div class="radio-row">
+        <label><input type="radio" name="hasBlocks" value="no" onchange="toggleBlocks()"> No</label>
+        <label><input type="radio" name="hasBlocks" value="yes" onchange="toggleBlocks()"> Yes</label>
+      </div>
+    </div>
+    <div id="blocksPanel" style="display:none">
+      <div class="field" style="margin-bottom:.75rem">
+        <label for="numBlocks">Number of blocks</label>
+        <input type="number" id="numBlocks" min="1" max="20" placeholder="e.g. 2" style="width:130px" oninput="generateBlockCards()">
+      </div>
+      <div class="block-cards" id="blockCards"></div>
+      <div style="margin-top:1rem">
+        <div class="section-label">Block position in output</div>
+        <div class="pos-options">
+          <label class="pos-opt" id="posOptShuffle">
+            <input type="radio" name="blockPos" value="shuffle" onchange="selectPosOpt(this)">
+            <div class="po-text">
+              <div class="po-label">Shuffle</div>
+              <div class="po-desc">Blocks are randomised and can appear in any position in the output</div>
+              <div class="pos-preview" id="prevShuffle"></div>
+            </div>
+          </label>
+          <label class="pos-opt" id="posOptRelative">
+            <input type="radio" name="blockPos" value="relative" onchange="selectPosOpt(this)">
+            <div class="po-text">
+              <div class="po-label">Relative shuffle</div>
+              <div class="po-desc">Blocks maintain their sequence relative to each other, but their absolute position in the paper shifts</div>
+              <div class="pos-preview" id="prevRelative"></div>
+            </div>
+          </label>
+          <label class="pos-opt" id="posOptFixed">
+            <input type="radio" name="blockPos" value="fixed" onchange="selectPosOpt(this)">
+            <div class="po-text">
+              <div class="po-label">Fixed</div>
+              <div class="po-desc">Blocks stay at their original position and sequence; only internal questions and options are randomised</div>
+              <div class="pos-preview" id="prevFixed"></div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="step-card locked" id="step4">
+  <div class="step-header">
+    <div class="sn">4</div>
+    <div class="st">Output format</div>
+    <div class="sc" id="step4status"></div>
+  </div>
+  <div class="step-body">
+    <div class="fmt-row">
+      <div class="fmt-col">
+        <div class="fc-label">Stem numbering style</div>
+        <select id="stemType" onchange="updateStemRadios();updatePreview()">
+          <option value="" disabled selected>Select style…</option>
+          <option value="arabic">1, 2, 3…</option>
+          <option value="roman">I, II, III…</option>
+          <option value="q">Q1, Q2, Q3…</option>
+        </select>
+        <div class="fmt-radios" id="stemRadios"></div>
+      </div>
+      <div class="fmt-col">
+        <div class="fc-label">Option labelling style</div>
+        <select id="optType" onchange="updateOptRadios();updatePreview()">
+          <option value="" disabled selected>Select style…</option>
+          <option value="alpha">a, b, c…</option>
+          <option value="roman_opt">i, ii, iii…</option>
+        </select>
+        <div class="fmt-radios" id="optRadios"></div>
+      </div>
+    </div>
+    <div class="fmt-preview" id="fmtPreview" style="display:none"></div>
+  </div>
+</div>
+
+<!-- BUTTONS -->
+<div class="btn-row">
+  <button class="run-btn" id="runBtn" disabled onclick="runRandomizer()">
+    <i class="ti ti-shuffle"></i> Randomize &amp; Download ZIP
+  </button>
+  <button class="reset-btn" onclick="doReset()">
+    <i class="ti ti-refresh"></i> Reset
+  </button>
+</div>
+
+<!-- CONSOLE -->
+<div class="console-wrap">
+  <div class="console-header">
+    <div class="console-dot cd-red"></div>
+    <div class="console-dot cd-amber"></div>
+    <div class="console-dot cd-green"></div>
+    <div class="console-title">CONSOLE</div>
+  </div>
+  <div class="console" id="console">
+    <div class="log head"><span class="ts">--:--:--</span><span class="msg">MCQ Randomizer ready. Upload a .txt file to begin.</span></div>
+  </div>
+</div>
+
+</div><!-- end .wrap -->
+
+<!-- SAMPLE POPUP -->
+<div class="popup-overlay" id="samplePopup">
+  <div class="popup">
+    <button class="popup-close" onclick="closePopup('samplePopup')"><i class="ti ti-x"></i></button>
+    <div class="popup-title"><i class="ti ti-file-description"></i> Sample MCQ file &amp; allowed formats</div>
+    <div class="popup-body">
+      <h3>Allowed question (stem) numbering formats</h3>
+      <div style="margin-bottom:.5rem"><span class="fmt-tag">1.</span><span class="fmt-tag">1)</span><span class="fmt-tag">(1)</span><span class="fmt-tag">Q1.</span><span class="fmt-tag">Q1)</span></div>
+      <h3>Allowed option formats</h3>
+      <div style="margin-bottom:.5rem"><span class="fmt-tag">A.</span><span class="fmt-tag">A)</span><span class="fmt-tag">(A)</span><span class="fmt-tag">a.</span><span class="fmt-tag">a)</span><span class="fmt-tag">1.</span><span class="fmt-tag">1)</span><span class="fmt-tag">i.</span><span class="fmt-tag">i)</span></div>
+      <h3>Sample questions</h3>
+      <pre>1. A 30-year-old patient presents with hypertension.
+   Which of the following is a selective beta-1 blocker?
+A. Propranolol
+B. Atenolol
+C. Labetalol
+D. Carvedilol
+
+2. Which drug is the first-line treatment for
+   type 2 diabetes mellitus?
+A. Glibenclamide
+B. Insulin glargine
+C. Metformin
+D. Sitagliptin
+
+3. A patient on warfarin therapy requires which
+   monitoring parameter?
+A. aPTT
+B. Platelet count
+C. PT/INR
+D. Bleeding time
+
+Q4. Which of the following is a loop diuretic?
+A. Hydrochlorothiazide
+B. Spironolactone
+C. Furosemide
+D. Acetazolamide
+
+5) Which neurotransmitter is deficient in
+   Parkinson's disease?
+A. Acetylcholine
+B. Dopamine
+C. Serotonin
+D. GABA</pre>
+      <p style="font-size:11px;color:var(--muted);margin-top:.5rem"><i class="ti ti-info-circle"></i> Mixed formats within the same file are accepted. The tool will detect the dominant pattern and flag any outliers in the console.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PRACTICES POPUP -->
+<div class="popup-overlay" id="practicesPopup">
+  <div class="popup">
+    <button class="popup-close" onclick="closePopup('practicesPopup')"><i class="ti ti-x"></i></button>
+    <div class="popup-title"><i class="ti ti-bulb"></i> Good MCQ practices</div>
+    <div class="popup-body">
+      <p style="color:var(--muted);font-style:italic">Content to be added. Check back soon!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ERROR POPUP -->
+<div class="popup-overlay" id="errPopup">
+  <div class="err-popup">
+    <div class="ep-icon"><i class="ti ti-alert-triangle"></i></div>
+    <div class="ep-title" id="errTitle">Error</div>
+    <div class="ep-msg" id="errMsg"></div>
+    <button class="ep-link" id="errSampleLink" style="display:none" onclick="closePopup('errPopup');openPopup('samplePopup')"><i class="ti ti-file-description"></i> View sample MCQ file &amp; allowed formats</button>
+    <button class="ep-btn" id="errBtn" onclick="closePopup('errPopup')">OK</button>
+  </div>
+</div>
+
+<script>
+let fileContent='',baseFileName='',totalQs=0;
+let stemTypeSel='',stemPunct='',optTypeSel='',optPunct='';
+let blockCardData=[];
+
+function ts(){return new Date().toTimeString().slice(0,8)}
+function log(msg,type='info'){
+  const d=document.createElement('div');d.className='log '+type;
+  d.innerHTML='<span class="ts">'+ts()+'</span><span class="msg">'+msg+'</span>';
+  const c=document.getElementById('console');c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function logDiv(){const hr=document.createElement('div');hr.className='log-div';document.getElementById('console').appendChild(hr);}
+function clrConsole(){document.getElementById('console').innerHTML='';}
+function openPopup(id){document.getElementById(id).classList.add('open')}
+function closePopup(id){document.getElementById(id).classList.remove('open')}
+function showErr(title,msg,showSample,autoReset){
+  document.getElementById('errTitle').textContent=title;
+  document.getElementById('errMsg').textContent=msg;
+  document.getElementById('errSampleLink').style.display=showSample?'block':'none';
+  document.getElementById('errBtn').onclick=function(){closePopup('errPopup');if(autoReset)doReset();};
+  openPopup('errPopup');
+}
+function unlock(id){document.getElementById(id).classList.remove('locked')}
+function setStatus(id,txt){document.getElementById(id).textContent=txt}
+
+function toRoman(n){
+  const v=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const s=['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+  let r='';for(let i=0;i<v.length;i++)while(n>=v[i]){r+=s[i];n-=v[i];}return r;
+}
+function toRomanLower(n){return toRoman(n).toLowerCase()}
+function stemLabel(n,type,punct){
+  const base=type==='arabic'?n:type==='roman'?toRoman(n):'Q'+n;
+  return punct==='.'?base+'.':punct===')'?base+')':'('+base+')';
+}
+function optLabel(i,type,punct){
+  const base=type==='alpha'?String.fromCharCode(97+i):toRomanLower(i+1);
+  return punct==='.'?base+'.':punct===')'?base+')':'('+base+')';
+}
+
+document.getElementById('fileInput').addEventListener('change',function(e){
+  var f=e.target.files[0];if(f)loadFile(f);
+});
+var dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.style.borderColor='var(--amber)';dz.style.background='var(--amber-light)'});
+dz.addEventListener('dragleave',function(){dz.style.borderColor='';dz.style.background=''});
+dz.addEventListener('drop',function(e){
+  e.preventDefault();dz.style.borderColor='';dz.style.background='';
+  var f=e.dataTransfer.files[0];
+  if(f&&f.name.endsWith('.txt'))loadFile(f);
+  else showErr('Wrong file type','Please upload a plain text (.txt) file.',true,false);
+});
+
+function loadFile(f){
+  var r=new FileReader();
+  r.onload=function(ev){
+    fileContent=ev.target.result;
+    baseFileName=f.name.replace(/\.txt$/i,'');
+    document.getElementById('fileName').textContent=f.name+' ('+(f.size/1024).toFixed(1)+' KB)';
+    clrConsole();logDiv();
+    log('File loaded: '+f.name,'head');logDiv();
+    validateFile();
+  };
+  r.readAsText(f);
+}
+
+function validateFile(){
+  log('Scanning file for valid MCQ structure...');
+  var qPats=[/^\d+[.)]/m,/^Q\d+[.)]/im,/^\(\d+\)/m];
+  var oPats=[/^[A-Ea-e][.)]/m,/^\([A-Ea-e]\)/m,/^[1-9][.)]/m,/^[ivxlIVXL]+[.)]/m];
+  var hasQ=qPats.some(function(p){return p.test(fileContent)});
+  var hasO=oPats.some(function(p){return p.test(fileContent)});
+  if(!hasQ||!hasO){
+    log('File does not appear to be a valid MCQ file.','err');
+    showErr('Invalid file','This file does not appear to contain recognisable MCQ questions and options. Please check your file and try again.',true,false);
+    fileContent='';document.getElementById('fileName').textContent='No file selected';
+    return;
+  }
+  log('Valid MCQ structure detected.','ok');
+  detectPatternVariability();
+  setStatus('step1status','✓ File loaded');
+  unlock('step2');
+}
+
+function detectPatternVariability(){
+  var lines=fileContent.split('\n');
+  var patterns={};var qLineNums=[];
+  lines.forEach(function(line,i){
+    var t=line.trim();var m;
+    if(m=t.match(/^(\d+)\./)){patterns['N.']=(patterns['N.']||0)+1;qLineNums.push({n:parseInt(m[1]),fmt:'N.',line:i+1});}
+    else if(m=t.match(/^(\d+)\)/)){patterns['N)']=(patterns['N)']||0)+1;qLineNums.push({n:parseInt(m[1]),fmt:'N)',line:i+1});}
+    else if(m=t.match(/^\((\d+)\)/)){patterns['(N)']=(patterns['(N)']||0)+1;qLineNums.push({n:parseInt(m[1]),fmt:'(N)',line:i+1});}
+    else if(m=t.match(/^Q(\d+)\./i)){patterns['QN.']=(patterns['QN.']||0)+1;qLineNums.push({n:parseInt(m[1]),fmt:'QN.',line:i+1});}
+    else if(m=t.match(/^Q(\d+)\)/i)){patterns['QN)']=(patterns['QN)']||0)+1;qLineNums.push({n:parseInt(m[1]),fmt:'QN)',line:i+1});}
+  });
+  var keys=Object.keys(patterns);
+  if(!keys.length){log('No question numbering pattern detected.','warn');return;}
+  var dominant=keys.reduce(function(a,b){return patterns[a]>=patterns[b]?a:b});
+  totalQs=qLineNums.length;
+  log('Dominant question format: '+dominant+' · '+patterns[dominant]+' question(s) detected');
+  log('Total questions detected: '+totalQs);
+  if(keys.length>1){
+    log('Format variability detected in this file:','warn');
+    keys.filter(function(k){return k!==dominant}).forEach(function(k){
+      var outliers=qLineNums.filter(function(q){return q.fmt===k}).map(function(q){return 'Q'+q.n+' (line '+q.line+')'}).join(', ');
+      log('  Non-dominant format "'+k+'": '+outliers,'warn');
+    });
+    log('Proceeding with mixed-format parsing.','warn');
+  }
+}
+
+function checkStep2(){
+  var o=parseInt(document.getElementById('numOptions').value);
+  var s=parseInt(document.getElementById('numSets').value);
+  if(o>=2&&o<=10&&s>=1&&s<=99){setStatus('step2status','✓ Set');unlock('step3');}
+}
+
+function toggleBlocks(){
+  var v=document.querySelector('input[name="hasBlocks"]:checked');
+  if(!v)return;
+  document.getElementById('blocksPanel').style.display=v.value==='yes'?'block':'none';
+  if(v.value==='no'){setStatus('step3status','✓ No blocks');unlock('step4');}
+  else{setStatus('step3status','');checkBlocksComplete();}
+}
+
+function generateBlockCards(){
+  var n=parseInt(document.getElementById('numBlocks').value);
+  if(isNaN(n)||n<1)return;
+  var container=document.getElementById('blockCards');
+  container.innerHTML='';blockCardData=[];
+  for(var i=1;i<=n;i++){
+    blockCardData.push({start:NaN,end:NaN});
+    var div=document.createElement('div');
+    div.className='block-card';div.id='bcard-'+i;
+    div.innerHTML='<div class="bc-row">'
+      +'<span style="font-size:12px;font-weight:700;color:var(--dark);min-width:52px">Block '+i+'</span>'
+      +'<label>From Q#&nbsp;<input type="number" min="1" placeholder="e.g. 11" id="bstart-'+i+'" oninput="updateBlock('+i+')"></label>'
+      +'<label>To Q#&nbsp;<input type="number" min="1" placeholder="e.g. 20" id="bend-'+i+'" oninput="updateBlock('+i+')"></label>'
+      +'</div>'
+      +'<div class="block-summary" id="bsum-'+i+'"></div>'
+      +'<div class="block-err" id="berr-'+i+'"></div>';
+    container.appendChild(div);
+  }
+  buildPreviews();checkBlocksComplete();
+}
+
+function updateBlock(i){
+  var s=parseInt(document.getElementById('bstart-'+i).value);
+  var e=parseInt(document.getElementById('bend-'+i).value);
+  var sumEl=document.getElementById('bsum-'+i);
+  var errEl=document.getElementById('berr-'+i);
+  var card=document.getElementById('bcard-'+i);
+  errEl.textContent='';card.classList.remove('invalid');
+  if(!isNaN(s)&&!isNaN(e)){
+    if(s>e){errEl.textContent='Start Q# must be \u2264 end Q#.';card.classList.add('invalid');}
+    else{
+      var count=e-s+1;
+      sumEl.textContent='Block '+i+' \u00b7 Q'+s+'\u2013Q'+e+' \u00b7 '+count+' question'+(count!==1?'s':'');
+      if(totalQs>0&&e>totalQs){errEl.textContent='End Q# exceeds total questions detected ('+totalQs+').';card.classList.add('invalid');}
+    }
+  } else{sumEl.textContent='';}
+  blockCardData[i-1]={start:s,end:e};
+  checkOverlaps();checkBlocksComplete();
+}
+
+function checkOverlaps(){
+  var n=blockCardData.length;
+  for(var i=0;i<n;i++){
+    var errEl=document.getElementById('berr-'+(i+1));
+    if(errEl&&!errEl.textContent)document.getElementById('bcard-'+(i+1)).classList.remove('invalid');
+  }
+  for(var i=0;i<n;i++)for(var j=i+1;j<n;j++){
+    var a=blockCardData[i],b=blockCardData[j];
+    if(isNaN(a.start)||isNaN(a.end)||isNaN(b.start)||isNaN(b.end))continue;
+    if(a.start<=b.end&&b.start<=a.end){
+      document.getElementById('berr-'+(i+1)).textContent='Overlaps with Block '+(j+1)+'.';
+      document.getElementById('bcard-'+(i+1)).classList.add('invalid');
+      document.getElementById('berr-'+(j+1)).textContent='Overlaps with Block '+(i+1)+'.';
+      document.getElementById('bcard-'+(j+1)).classList.add('invalid');
+    }
+  }
+}
+
+function checkBlocksComplete(){
+  var v=document.querySelector('input[name="hasBlocks"]:checked');
+  if(!v||v.value!=='yes')return;
+  var n=parseInt(document.getElementById('numBlocks').value);
+  if(isNaN(n)||n<1)return;
+  var pos=document.querySelector('input[name="blockPos"]:checked');
+  var allFilled=blockCardData.length===n&&blockCardData.every(function(b){return !isNaN(b.start)&&!isNaN(b.end)&&b.start<=b.end});
+  var noErrors=document.querySelectorAll('.block-card.invalid').length===0;
+  if(allFilled&&noErrors&&pos){setStatus('step3status','✓ Set');unlock('step4');}
+}
+
+function selectPosOpt(radio){
+  document.querySelectorAll('.pos-opt').forEach(function(el){el.classList.remove('selected')});
+  radio.closest('.pos-opt').classList.add('selected');
+  checkBlocksComplete();
+}
+
+function seg(text,cls){return '<span class="pp-seg '+cls+'">'+text+'</span>';}
+function arr(){return '<span class="pp-arrow"> \u2192 </span>';}
+function buildPreviews(){
+  var inputRow='<span class="pp-label">Input:</span>'+seg('F','pp-free')+arr()+seg('F','pp-free')+arr()+seg('Blk 1','pp-block')+arr()+seg('F','pp-free')+arr()+seg('Blk 2','pp-block')+arr()+seg('F','pp-free');
+  document.getElementById('prevShuffle').innerHTML=inputRow+'<br><span class="pp-label">Output:</span>'+seg('Blk 2','pp-block')+arr()+seg('F','pp-free')+arr()+seg('F','pp-free')+arr()+seg('Blk 1','pp-block')+arr()+seg('F','pp-free')+arr()+seg('F','pp-free');
+  document.getElementById('prevRelative').innerHTML=inputRow+'<br><span class="pp-label">Output:</span>'+seg('F','pp-free')+arr()+seg('F','pp-free')+arr()+seg('F','pp-free')+arr()+seg('Blk 1','pp-block')+arr()+seg('Blk 2','pp-block')+arr()+seg('F','pp-free');
+  document.getElementById('prevFixed').innerHTML=inputRow+'<br><span class="pp-label">Output:</span>'+seg('F','pp-free')+arr()+seg('F','pp-free')+arr()+seg('Blk 1','pp-block')+arr()+seg('F','pp-free')+arr()+seg('Blk 2','pp-block')+arr()+seg('F','pp-free');
+}
+
+function updateStemRadios(){
+  stemTypeSel=document.getElementById('stemType').value;stemPunct='';
+  var ex=stemTypeSel==='arabic'?'1':stemTypeSel==='roman'?'I':'Q1';
+  var labels=[ex+'.',ex+')','('+ex+')'];
+  var puncts=['.',')',  '()'];
+  var cont=document.getElementById('stemRadios');cont.innerHTML='';
+  labels.forEach(function(label,i){
+    var btn=document.createElement('span');btn.className='fmt-radio-btn';btn.textContent=label;btn.dataset.punct=puncts[i];
+    btn.onclick=function(){document.querySelectorAll('#stemRadios .fmt-radio-btn').forEach(function(b){b.classList.remove('active')});this.classList.add('active');stemPunct=this.dataset.punct;checkStep4();updatePreview();};
+    cont.appendChild(btn);
+  });
+  checkStep4();updatePreview();
+}
+
+function updateOptRadios(){
+  optTypeSel=document.getElementById('optType').value;optPunct='';
+  var ex=optTypeSel==='alpha'?'a':'i';
+  var labels=[ex+'.',ex+')','('+ex+')'];
+  var puncts=['.',')',  '()'];
+  var cont=document.getElementById('optRadios');cont.innerHTML='';
+  labels.forEach(function(label,i){
+    var btn=document.createElement('span');btn.className='fmt-radio-btn';btn.textContent=label;btn.dataset.punct=puncts[i];
+    btn.onclick=function(){document.querySelectorAll('#optRadios .fmt-radio-btn').forEach(function(b){b.classList.remove('active')});this.classList.add('active');optPunct=this.dataset.punct;checkStep4();updatePreview();};
+    cont.appendChild(btn);
+  });
+  checkStep4();updatePreview();
+}
+
+function updatePreview(){
+  var prev=document.getElementById('fmtPreview');
+  if(!stemTypeSel||!stemPunct||!optTypeSel||!optPunct){prev.style.display='none';return;}
+  prev.style.display='block';
+  var numOpts=Math.min(parseInt(document.getElementById('numOptions').value)||4,4);
+  var sampleOpts=['Propranolol','Atenolol','Metoprolol','Labetalol'];
+  var html=stemLabel(1,stemTypeSel,stemPunct)+' Which of the following is a cardioselective beta blocker?\n';
+  for(var i=0;i<numOpts;i++)html+='   '+optLabel(i,optTypeSel,optPunct)+' '+sampleOpts[i]+'\n';
+  prev.textContent=html.trim();
+}
+
+function checkStep4(){
+  if(stemTypeSel&&stemPunct&&optTypeSel&&optPunct){
+    setStatus('step4status','✓ Set');
+    document.getElementById('runBtn').disabled=false;
+  }
+}
+
+function parseQuestions(text,numOptions){
+  var lines=text.split('\n');var questions=[];
+  var qPats=[/^(\d+)\.\s+(.+)/,/^(\d+)\)\s+(.+)/,/^\((\d+)\)\s+(.+)/,/^Q(\d+)\.\s+(.+)/i,/^Q(\d+)\)\s+(.+)/i];
+  // Primary option patterns: uppercase/lowercase alpha (A-E/a-e) and numeric (1-9).
+  // These are tried first and on any line once inside a question.
+  var oPatsMain=[/^([A-Ea-e])\.\s+(.+)/,/^([A-Ea-e])\)\s+(.+)/,/^\(([A-Ea-e])\)\s+(.+)/,/^([1-9])\.\s+(.+)/,/^([1-9])\)\s+(.+)/];
+  // Roman numeral option patterns (lowercase only — uppercase Romans like I./II. are common
+  // inside question stems as inline list markers and must NOT be treated as options).
+  // These are only tried AFTER at least one primary option has already been captured,
+  // so stem content such as "I. Potency  II. Brand name …" is never misread as an option.
+  var oPatsRoman=[/^([ivxl]+)\.\s+(.+)/,/^([ivxl]+)\)\s+(.+)/];
+  var cur=null,curOpts=[];
+  function flush(){if(cur&&curOpts.length)questions.push({num:cur.num,text:cur.text,options:curOpts.slice()});cur=null;curOpts=[];}
+  lines.forEach(function(raw){
+    var line=raw.trim();if(!line)return;
+    var qm=false;
+    for(var pi=0;pi<qPats.length;pi++){var m=line.match(qPats[pi]);if(m){flush();cur={num:parseInt(m[1]),text:m[2].trim()};curOpts=[];qm=true;break;}}
+    if(qm)return;
+    if(cur){
+      var om=false;
+      // Try primary option patterns on every line inside a question.
+      for(var oi=0;oi<oPatsMain.length;oi++){var m=line.match(oPatsMain[oi]);if(m){if(curOpts.length<numOptions)curOpts.push({text:m[2].trim()});om=true;break;}}
+      // Only try roman option patterns once at least one real option has been found.
+      // This prevents stem lines like "I. Potency  II. Brand name…" from being
+      // mistaken for roman-numeral-labelled options.
+      if(!om&&curOpts.length>0){
+        for(var ri=0;ri<oPatsRoman.length;ri++){var m=line.match(oPatsRoman[ri]);if(m){if(curOpts.length<numOptions)curOpts.push({text:m[2].trim()});om=true;break;}}
+      }
+      if(!om){if(curOpts.length===0)cur.text+='\n'+raw;else curOpts[curOpts.length-1].text+=' '+line;}
+    }
+  });
+  flush();return questions;
+}
+
+function checkDupes(qs){
+  var seen={};var dups=[];
+  qs.forEach(function(q,i){
+    var k=q.text.toLowerCase().replace(/\s+/g,' ').trim();
+    if(seen[k]!==undefined)dups.push({a:seen[k]+1,b:i+1,t:q.text.slice(0,50)});
+    else seen[k]=i;
+  });
+  return dups;
+}
+
+function checkAOTA(qs){
+  var pat=/\b(all of the above|none of the above)\b/i;
+  return qs.filter(function(q){return q.options.some(function(o){return pat.test(o.text)})})
+    .map(function(q){return {num:q.num,opt:q.options.find(function(o){return pat.test(o.text)}).text.slice(0,50)}});
+}
+
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+
+function buildSet(qs,blocks,blockPos,numOptions){
+  var assignedNums=new Set();
+  blocks.forEach(function(b){for(var n=b.start;n<=b.end;n++)assignedNums.add(n);});
+  var freeQs=shuffle(qs.filter(function(q){return !assignedNums.has(q.num)}));
+  var blockGroups=blocks.map(function(b,i){
+    return {start:b.start,end:b.end,origIdx:i,qs:shuffle(qs.filter(function(q){return q.num>=b.start&&q.num<=b.end}))};
+  });
+  var units=[];
+  freeQs.forEach(function(q){units.push({type:'free',q:q})});
+  blockGroups.forEach(function(bg){units.push({type:'block',bg:bg})});
+
+  if(blockPos==='shuffle'){
+    units=shuffle(units);
+  } else if(blockPos==='relative'){
+    var freeU=shuffle(units.filter(function(u){return u.type==='free'}));
+    var blockU=blockGroups.map(function(bg){return {type:'block',bg:bg}});
+    var total=freeU.length+blockU.length;
+    var allPos=shuffle(Array.from({length:total},function(_,i){return i}));
+    var blockPositions=allPos.slice(0,blockU.length).sort(function(a,b){return a-b});
+    units=new Array(total);
+    blockPositions.forEach(function(pos,i){units[pos]=blockU[i]});
+    var fi=0;for(var i=0;i<total;i++)if(!units[i])units[i]=freeU[fi++];
+  } else {
+    var freeU=shuffle(units.filter(function(u){return u.type==='free'}));
+    var sortedBlocks=blockGroups.slice().sort(function(a,b){return a.start-b.start}).map(function(bg){return {type:'block',bg:bg}});
+    var total=freeU.length+sortedBlocks.length;
+    var blockSlots=sortedBlocks.map(function(_,i){return Math.round((i+1)*(total/(sortedBlocks.length+1))-1)});
+    units=new Array(total);
+    blockSlots.forEach(function(pos,i){units[pos]=sortedBlocks[i]});
+    var fi=0;for(var i=0;i<total;i++)if(!units[i])units[i]=freeU[fi++];
+  }
+
+  var text='';var idx=1;
+  units.filter(Boolean).forEach(function(unit){
+    var qList=unit.type==='free'?[unit.q]:unit.bg.qs;
+    qList.forEach(function(q){
+      var shOpts=shuffle(q.options);
+      text+=stemLabel(idx,stemTypeSel,stemPunct)+' '+q.text+'\n';
+      shOpts.forEach(function(o,i){text+='   '+optLabel(i,optTypeSel,optPunct)+' '+o.text+'\n';});
+      text+='\n';idx++;
+    });
+  });
+  return text;
+}
+
+function runRandomizer(){
+  clrConsole();logDiv();
+  log('Starting randomization...','head');logDiv();
+  var numOptions=parseInt(document.getElementById('numOptions').value);
+  var numSets=parseInt(document.getElementById('numSets').value);
+  var hbEl=document.querySelector('input[name="hasBlocks"]:checked');
+  var hasBlocks=hbEl&&hbEl.value==='yes';
+  var bpEl=document.querySelector('input[name="blockPos"]:checked');
+  var blockPos=bpEl?bpEl.value:'shuffle';
+  var blocks=hasBlocks?blockCardData.filter(function(b){return !isNaN(b.start)&&!isNaN(b.end)}):[]; 
+  log('Parsing questions ('+numOptions+' options each)...');
+  var qs=parseQuestions(fileContent,numOptions);
+  log('Parsed: '+qs.length+' question(s).',qs.length?'ok':'err');
+  if(!qs.length){showErr('Parse error','No questions could be parsed. Please verify your file format.',true,true);return;}
+  log('Checking for duplicate questions...');
+  var dups=checkDupes(qs);
+  if(dups.length){
+    dups.forEach(function(d){log('Duplicate: Q'+d.a+' & Q'+d.b+' \u2014 "'+d.t+'\u2026"','warn')});
+    log(dups.length+' duplicate(s) found. Please review before using these sets.','warn');
+  } else log('No duplicates found.','ok');
+  log('Checking for "all / none of the above"...');
+  var aota=checkAOTA(qs);
+  if(aota.length){
+    aota.forEach(function(a){log('Q'+a.num+': "'+a.opt+'" \u2014 cannot randomise','err')});
+    log('Cannot proceed. Remove "all/none of the above" options and retry.','err');logDiv();
+    showErr('Cannot randomize','One or more questions contain "all of the above" or "none of the above" as an option. These cannot be randomized. Please correct your file and try again.',false,false);
+    return;
+  }
+  log('No problematic options found.','ok');
+  if(hasBlocks){
+    log('Blocks: '+blocks.length+' defined \u00b7 position mode: '+blockPos);
+    blocks.forEach(function(b,i){log('  Block '+(i+1)+': Q'+b.start+'\u2013Q'+b.end+' ('+(b.end-b.start+1)+' questions)')});
+  }
+  logDiv();
+  log('Generating '+numSets+' randomized set(s)...','head');
+  var zip=new JSZip();
+  for(var s=0;s<numSets;s++){
+    var name=baseFileName+'_Set-'+(s+1)+'.txt';
+    zip.file(name,buildSet(qs,blocks,blockPos,numOptions));
+    log('Generated: '+name,'ok');
+  }
+  log('Building ZIP archive...');
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download=baseFileName+'_Randomized.zip';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    logDiv();
+    log('Done! '+numSets+' set(s) saved as: '+baseFileName+'_Randomized.zip','ok');
+  }).catch(function(err){
+    log('ZIP error: '+err.message,'err');
+    showErr('ZIP error','An error occurred while generating the ZIP file: '+err.message,false,true);
+  });
+}
+
+function doReset(){
+  fileContent='';baseFileName='';totalQs=0;
+  stemTypeSel='';stemPunct='';optTypeSel='';optPunct='';blockCardData=[];
+  document.getElementById('fileInput').value='';
+  document.getElementById('fileName').textContent='No file selected';
+  document.getElementById('numOptions').value='';
+  document.getElementById('numSets').value='';
+  document.getElementById('numBlocks').value='';
+  document.getElementById('blockCards').innerHTML='';
+  document.getElementById('blocksPanel').style.display='none';
+  document.querySelectorAll('input[name="hasBlocks"]').forEach(function(r){r.checked=false});
+  document.querySelectorAll('input[name="blockPos"]').forEach(function(r){r.checked=false});
+  document.querySelectorAll('.pos-opt').forEach(function(el){el.classList.remove('selected')});
+  document.getElementById('stemType').value='';
+  document.getElementById('optType').value='';
+  document.getElementById('stemRadios').innerHTML='';
+  document.getElementById('optRadios').innerHTML='';
+  document.getElementById('fmtPreview').style.display='none';
+  document.getElementById('runBtn').disabled=true;
+  ['step2','step3','step4'].forEach(function(id){document.getElementById(id).classList.add('locked')});
+  ['step1status','step2status','step3status','step4status'].forEach(function(id){setStatus(id,'')});
+  clrConsole();
+  log('MCQ Randomizer reset. Upload a .txt file to begin.','head');
+}
+
+document.querySelectorAll('.popup-overlay').forEach(function(el){
+  el.addEventListener('click',function(e){if(e.target===el)el.classList.remove('open')});
+});
+</script>
+</body>
+</html>
