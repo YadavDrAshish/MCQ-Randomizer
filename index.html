@@ -712,7 +712,7 @@ function buildSet(qs,blocks,blockPos,numOptions){
     qList.forEach(function(q){
       var shOpts=shuffle(q.options);
       text+=stemLabel(idx,stemTypeSel,stemPunct)+' '+q.text+'\n';
-      shOpts.forEach(function(o,i){text+='   '+optLabel(i,optTypeSel,optPunct)+' '+o.text+'\n';});
+      shOpts.forEach(function(o,i){text+=optLabel(i,optTypeSel,optPunct)+' '+o.text+'\n';});
       text+='\n';idx++;
     });
   });
